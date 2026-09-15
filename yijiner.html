@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="referrer" content="no-referrer">
+<title>凡凡选股 · 一进二战法</title>
+<style>
+:root{
+  --bg:#0d1117;--bg2:#161b22;--bg3:#1c2128;--border:#30363d;
+  --text:#e6edf3;--muted:#8b949e;--dim:#6e7681;
+  --red:#f85149;--green:#3fb950;--gold:#d29922;--blue:#58a6ff;--purple:#bc8cff;
+  --up:#f85149;--down:#3fb950;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:13px;line-height:1.5;min-height:100vh}
+/* 顶栏 */
+.topbar{background:var(--bg2);border-bottom:1px solid var(--border);padding:10px 14px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.topbar .logo{font-size:16px;font-weight:700;color:var(--gold)}
+.topbar .logo span{color:var(--muted);font-size:11px;font-weight:400;margin-left:6px}
+.topbar .status{font-size:11px;color:var(--muted);display:flex;align-items:center;gap:6px}
+.topbar .status .dot{width:8px;height:8px;border-radius:50%;background:var(--dim)}
+.topbar .status .dot.online{background:var(--green)}
+.topbar .status .dot.offline{background:var(--red)}
+/* 风险提示 */
+.risk{background:rgba(248,81,73,0.08);border:1px solid rgba(248,81,73,0.3);color:var(--muted);font-size:11px;padding:6px 12px;text-align:center}
+/* 配置区 */
+.config-bar{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin:12px;display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.config-bar label{font-size:11px;color:var(--muted);display:flex;align-items:center;gap:4px}
+.config-bar input,.config-bar select{background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:4px;padding:5px 8px;font-size:12px}
+.config-bar input{width:120px}
+/* 按钮 */
+.btn{padding:8px 16px;border-radius:6px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-size:12px;cursor:pointer;transition:all .2s}
+.btn:hover{background:var(--border)}
+.btn.primary{background:var(--gold);color:#000;border-color:var(--gold);font-weight:600}
+.btn.primary:hover{background:#e0a82e}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+/* 内容区 */
+.container{padding:0 12px 20px}
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:10px}
+.card-title{font-size:14px;font-weight:600;margin-bottom:10px;color:var(--text);display:flex;align-items:center;gap:8px}
+.card-title .step{width:22px;height:22px;border-radius:50%;background:var(--gold);color:#000;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0}
+.card-title .tag{font-size:10px;padding:2px 6px;border-radius:4px;background:var(--bg3);color:var(--muted);margin-left:auto}
+/* 情绪状态 */
+.timing-box{text-align:center;padding:16px;border-radius:8px;margin-bottom:10px}
+.timing-box.trade{background:rgba(63,185,80,0.1);border:1px solid rgba(63,185,80,0.3)}
+.timing-box.no-trade{background:rgba(248,81,73,0.1);border:1px solid rgba(248,81,73,0.3)}
+.timing-box .phase{font-size:22px;font-weight:700;margin-bottom:4px}
+.timing-box.trade .phase{color:var(--green)}
+.timing-box.no-trade .phase{color:var(--red)}
+.timing-box .reason{font-size:12px;color:var(--muted);line-height:1.6}
+.timing-box .score{font-size:14px;color:var(--gold);margin-top:4px}
+/* 板块卡片 */
+.sector-cards{display:flex;gap:8px;flex-wrap:wrap}
+.sector-card{flex:1;min-width:140px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px}
+.sector-card.top{border-color:var(--gold);background:rgba(210,153,34,0.08)}
+.sector-card .rank{font-size:10px;color:var(--gold);font-weight:700}
+.sector-card .name{font-size:14px;font-weight:600;margin:4px 0}
+.sector-card .stats{font-size:11px;color:var(--muted)}
+.sector-card .stats b{color:var(--text)}
+/* 候选股表格 */
+.table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table{width:100%;border-collapse:collapse;font-size:12px;min-width:600px}
+th{background:var(--bg3);color:var(--muted);padding:8px 6px;text-align:left;font-weight:500;white-space:nowrap;border-bottom:1px solid var(--border)}
+td{padding:8px 6px;border-bottom:1px solid var(--border);white-space:nowrap}
+tr:hover td{background:var(--bg3)}
+.stock-name{font-weight:600}
+.stock-code{color:var(--dim);font-size:11px}
+.score-badge{display:inline-block;padding:2px 8px;border-radius:4px;font-weight:700;font-size:12px}
+.score-high{background:rgba(248,81,73,0.2);color:var(--red)}
+.score-mid{background:rgba(210,153,34,0.2);color:var(--gold)}
+.score-low{background:var(--bg3);color:var(--muted)}
+/* 剔除列表 */
+.rejected-item{padding:6px 0;border-bottom:1px solid var(--border);font-size:12px}
+.rejected-item:last-child{border-bottom:none}
+.rejected-item .name{font-weight:600}
+.rejected-item .reasons{color:var(--red);font-size:11px;margin-top:2px}
+/* 操作指南 */
+.guide-box{line-height:1.8;font-size:13px}
+.guide-box h3{font-size:15px;font-weight:600;margin:16px 0 8px;color:var(--gold)}
+.guide-box h2{font-size:17px;font-weight:700;margin:20px 0 10px;border-bottom:1px solid var(--border);padding-bottom:6px}
+.guide-box strong{color:var(--gold)}
+.guide-box ul{padding-left:20px;margin:8px 0}
+.guide-box li{margin:4px 0}
+.guide-box table{width:100%;border-collapse:collapse;margin:10px 0;font-size:12px}
+.guide-box th,.guide-box td{border:1px solid var(--border);padding:6px 8px;text-align:left}
+.guide-box th{background:var(--bg3)}
+.guide-box blockquote{border-left:3px solid var(--gold);padding:4px 12px;margin:8px 0;color:var(--muted);background:rgba(210,153,34,0.05);border-radius:0 4px 4px 0}
+/* 战法流程 */
+.flow-steps{display:flex;gap:4px;margin-bottom:16px;overflow-x:auto;padding-bottom:4px}
+.flow-step{flex:1;min-width:80px;text-align:center;padding:8px 4px;background:var(--bg3);border-radius:6px;font-size:11px;color:var(--muted);border:1px solid var(--border)}
+.flow-step.active{background:var(--gold);color:#000;border-color:var(--gold);font-weight:600}
+.flow-step .n{font-size:14px;font-weight:700;display:block}
+/* 空状态 */
+.empty{text-align:center;color:var(--dim);padding:30px 20px;font-size:12px}
+.empty .icon{font-size:32px;margin-bottom:8px;opacity:.5}
+/* 底部 */
+.footer{text-align:center;color:var(--dim);font-size:10px;padding:20px 12px;line-height:1.8}
+/* 加载遮罩 */
+.loading-mask{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(13,17,23,.8);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:999}
+.loading-mask .spinner{width:32px;height:32px;border:3px solid var(--border);border-top-color:var(--gold);border-radius:50%;animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-mask .txt{margin-top:12px;color:var(--muted);font-size:12px}
+/* 响应式 */
+@media(max-width:480px){
+  .sector-card{min-width:100%}
+  .flow-step{min-width:70px;font-size:10px}
+}
+</style>
+</head>
+<body>
+
+<!-- 顶栏 -->
+<div class="topbar">
+  <div class="logo">凡凡选股<span>一进二战法</span></div>
+  <div class="status">
+    <span class="dot" id="apiDot"></span>
+    <span id="apiStatus">连接中...</span>
+    <a href="index_cache.html" style="color:var(--blue);font-size:11px;margin-left:8px;">← 返回主页</a>
+  </div>
+</div>
+
+<!-- 风险提示 -->
+<div class="risk">⚠️ 本工具仅为数据整理参考，不构成任何投资建议，股市存在风险，交易需要谨慎。一进二战法为高风险超短策略，请严格执行止损纪律。</div>
+
+<!-- 配置区 -->
+<div class="config-bar">
+  <label>API地址:<input type="text" id="apiUrl" value="" placeholder="http://localhost:8080"></label>
+  <label>日期:<input type="date" id="tradeDate"></label>
+  <button class="btn primary" id="btnRefresh">刷新数据</button>
+  <button class="btn" id="btnTest">测试连接</button>
+</div>
+
+<!-- 战法流程 -->
+<div class="container">
+  <div class="flow-steps">
+    <div class="flow-step active" id="step1"><span class="n">1</span>宏观择时</div>
+    <div class="flow-step" id="step2"><span class="n">2</span>中观选势</div>
+    <div class="flow-step" id="step3"><span class="n">3</span>微观筛选</div>
+    <div class="flow-step" id="step4"><span class="n">4</span>临场狙击</div>
+    <div class="flow-step" id="step5"><span class="n">5</span>风控退出</div>
+  </div>
+
+  <!-- 第一步：宏观择时 -->
+  <div class="card">
+    <div class="card-title"><span class="step">1</span>宏观择时（定生死）<span class="tag" id="timingTag">—</span></div>
+    <div id="timingBox">
+      <div class="empty"><div class="icon">⏳</div>加载中...</div>
+    </div>
+  </div>
+
+  <!-- 第二步：中观选势 -->
+  <div class="card" id="cardSector" style="display:none">
+    <div class="card-title"><span class="step">2</span>中观选势（找土壤）<span class="tag">最强主线</span></div>
+    <div class="sector-cards" id="sectorCards"></div>
+    <div style="font-size:11px;color:var(--muted);margin-top:8px;">💡 只在最强的2个主线板块中筛选首板股，拒绝孤狼战法</div>
+  </div>
+
+  <!-- 第三步：微观筛选 -->
+  <div class="card" id="cardCandidates" style="display:none">
+    <div class="card-title"><span class="step">3</span>微观筛选（选武器）<span class="tag" id="candTag">0只</span></div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>优先级</th><th>股票</th><th>评分</th><th>封板时间</th><th>封单比</th><th>收盘价</th><th>流通市值</th><th>换手率</th><th>所属板块</th></tr></thead>
+        <tbody id="candBody"></tbody>
+      </table>
+    </div>
+    <div style="margin-top:12px;">
+      <div style="font-size:12px;font-weight:600;margin-bottom:6px;color:var(--muted);">被剔除的股票（前20）</div>
+      <div id="rejectedList"></div>
+    </div>
+  </div>
+
+  <!-- 第四步+第五步：操作指南 -->
+  <div class="card" id="cardGuide" style="display:none">
+    <div class="card-title"><span class="step">4</span>临场狙击 + <span class="step">5</span>风控退出</div>
+    <div class="guide-box" id="guideBox"></div>
+  </div>
+
+  <!-- 空仓提示 -->
+  <div class="card" id="cardEmpty" style="display:none">
+    <div class="card-title">📛 系统执行空仓纪律</div>
+    <div id="emptyReason" style="line-height:1.8;color:var(--muted);"></div>
+  </div>
+
+</div>
+
+<!-- 底部 -->
+<div class="footer">
+  凡凡选股 · 一进二战法<br>
+  五步流程：宏观择时 → 中观选势 → 微观筛选 → 临场狙击 → 风控退出<br>
+  数据来源：本地缓存（由 fanfan_yijiner.py 计算）| 仅供参考，不构成投资建议
+</div>
+
+<!-- 加载遮罩 -->
+<div class="loading-mask" id="loadingMask" style="display:none">
+  <div class="spinner"></div>
+  <div class="txt" id="loadingTxt">加载中...</div>
+</div>
+
+<script>
+'use strict';
+
+const DEFAULT_API = (location.protocol === 'file:') ? 'http://localhost:8080' : location.origin;
+let API_BASE = localStorage.getItem('fanfan_api') || DEFAULT_API;
+
+const $ = s => document.querySelector(s);
+const $$ = s => document.querySelectorAll(s);
+const esc = s => String(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+function showLoading(txt){$('#loadingMask').style.display='flex';$('#loadingTxt').textContent=txt;}
+function hideLoading(){$('#loadingMask').style.display='none';}
+
+async function apiGet(path){
+  const url = API_BASE + path;
+  const res = await fetch(url, {headers:{'Accept':'application/json'}});
+  if(!res.ok) throw new Error(`API ${res.status}: ${res.statusText}`);
+  return res.json();
+}
+
+async function testConnection(){
+  try{
+    const r = await apiGet('/api/health');
+    $('#apiDot').className='dot online';
+    $('#apiStatus').textContent='已连接';
+    return true;
+  }catch(e){
+    $('#apiDot').className='dot offline';
+    $('#apiStatus').textContent='连接失败';
+    return false;
+  }
+}
+
+// 渲染Markdown（简化版）
+function renderMarkdown(md){
+  if(!md) return '';
+  let html = md;
+  html = html.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  html = html.replace(/^### (.+)$/gm, '<h3>$1</h3>');
+  html = html.replace(/^## (.+)$/gm, '<h2>$1</h2>');
+  html = html.replace(/^# (.+)$/gm, '<h1 style="font-size:20px;font-weight:700;margin:20px 0 12px;">$1</h1>');
+  html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  html = html.replace(/^&gt; (.+)$/gm, '<blockquote>$1</blockquote>');
+  html = html.replace(/^- (.+)$/gm, '<li>$1</li>');
+  html = html.replace(/(<li[^>]*>.*<\/li>\n?)+/g, '<ul>$&</ul>');
+  html = html.replace(/^\d+\. (.+)$/gm, '<li>$1</li>');
+  html = html.replace(/^---$/gm, '<hr style="border:none;border-top:1px solid var(--border);margin:16px 0;">');
+  html = html.replace(/\n\n/g, '</p><p style="margin:8px 0;">');
+  html = '<p style="margin:8px 0;">' + html + '</p>';
+  html = html.replace(/<p[^>]*>\s*<\/p>/g, '');
+  return html;
+}
+
+// 加载一进二数据
+async function loadYijiner(){
+  const date = $('#tradeDate').value || new Date().toISOString().slice(0,10);
+  showLoading('加载一进二数据...');
+  try{
+    const r = await apiGet(`/api/scan/yijiner?date=${date}`);
+    const data = r.data;
+    if(!data){
+      alert('未找到一进二计算结果，请先运行：python3 fanfan_yijiner.py');
+      return;
+    }
+    renderYijiner(data);
+  }catch(e){
+    alert('加载失败: '+e.message+'\n请确认 fanfan_server.py 正在运行，且已运行 fanfan_yijiner.py');
+  }finally{
+    hideLoading();
+  }
+}
+
+function renderYijiner(data){
+  // 第一步：宏观择时
+  const canTrade = data.can_trade;
+  const phase = data.phase || '未知';
+  const emotion = data.emotion || {};
+  const score = emotion.score || '—';
+
+  $('#timingTag').textContent = phase;
+  $('#timingTag').style.color = canTrade ? 'var(--green)' : 'var(--red)';
+
+  if(canTrade){
+    $('#timingBox').innerHTML = `
+      <div class="timing-box trade">
+        <div class="phase">✅ ${phase} · 可出击</div>
+        <div class="score">量化得分：${score}/78</div>
+        <div class="reason">${esc(data.reason||'')}</div>
+      </div>`;
+    $('#step1').classList.add('active');
+    $('#step2').classList.add('active');
+    $('#step3').classList.add('active');
+    $('#step4').classList.add('active');
+    $('#step5').classList.add('active');
+  }else{
+    $('#timingBox').innerHTML = `
+      <div class="timing-box no-trade">
+        <div class="phase">❌ ${phase} · 空仓</div>
+        <div class="score">量化得分：${score}/78</div>
+        <div class="reason">${esc(data.reason||'')}</div>
+      </div>`;
+    $('#step1').classList.add('active');
+    $('#step2').classList.remove('active');
+    $('#step3').classList.remove('active');
+    $('#step4').classList.remove('active');
+    $('#step5').classList.remove('active');
+  }
+
+  if(!canTrade){
+    // 隐藏后续步骤，显示空仓提示
+    $('#cardSector').style.display = 'none';
+    $('#cardCandidates').style.display = 'none';
+    $('#cardGuide').style.display = 'none';
+    $('#cardEmpty').style.display = 'block';
+    $('#emptyReason').innerHTML = `
+      <p>当前情绪周期处于 <b style="color:var(--red)">${phase}</b>，系统自动隐藏一进二候选池。</p>
+      <p style="margin-top:8px;">${esc(data.reason||'')}</p>
+      <p style="margin-top:8px;color:var(--gold);">⚠️ 铁律：退潮期/冰点期绝对空仓，此时任何完美的形态都会失效，强行交易极易被核按钮。</p>
+      <p style="margin-top:8px;">等待情绪周期进入<b>启动期</b>或<b>主升期</b>后，系统将自动恢复候选池。</p>
+    `;
+    return;
+  }
+
+  // 显示后续步骤
+  $('#cardEmpty').style.display = 'none';
+  $('#cardSector').style.display = 'block';
+  $('#cardCandidates').style.display = 'block';
+  $('#cardGuide').style.display = 'block';
+
+  // 第二步：中观选势
+  const sectors = data.top_sectors || [];
+  $('#sectorCards').innerHTML = sectors.map((s,i)=>`
+    <div class="sector-card ${i===0?'top':''}">
+      <div class="rank">${i===0?'🥇 最强主线':'🥈 次强主线'}</div>
+      <div class="name">${esc(s.name)}</div>
+      <div class="stats">涨停 <b>${s.count}</b> 只 | 最高 <b>${s.max_lb}</b> 板</div>
+    </div>
+  `).join('');
+
+  // 第三步：微观筛选
+  const cands = data.candidates || [];
+  $('#candTag').textContent = `${cands.length}只候选`;
+  $('#candBody').innerHTML = cands.length ? cands.map((c,i)=>{
+    const scoreClass = c.score>=70?'score-high':c.score>=50?'score-mid':'score-low';
+    return `<tr>
+      <td><b style="color:var(--gold)">${i+1}</b></td>
+      <td><div class="stock-name">${esc(c.name)}</div><div class="stock-code">${c.code}</div></td>
+      <td><span class="score-badge ${scoreClass}">${c.score}</span></td>
+      <td>${c.fbt_str||'—'}</td>
+      <td class="up">${c.fund_ratio}%</td>
+      <td>${c.price?.toFixed(2)||'—'}</td>
+      <td>${c.ltsz?.toFixed(1)||'—'}亿</td>
+      <td>${c.hs?.toFixed(1)||'—'}%</td>
+      <td class="muted">${esc(c.sector)}</td>
+    </tr>`;
+  }).join('') : '<tr><td colspan="9" class="empty"><div class="icon">🔍</div>无符合条件的候选股</td></tr>';
+
+  // 被剔除列表
+  const rejected = data.rejected || [];
+  $('#rejectedList').innerHTML = rejected.length ? rejected.map(r=>`
+    <div class="rejected-item">
+      <span class="name">${esc(r.name)}</span>（${r.code}）
+      <div class="reasons">剔除原因：${r.reasons.join('、')}</div>
+    </div>
+  `).join('') : '<div class="muted" style="font-size:11px;">无</div>';
+
+  // 第四步+第五步：操作指南
+  $('#guideBox').innerHTML = renderMarkdown(data.guide || '');
+}
+
+// 初始化
+$('#apiUrl').value = API_BASE;
+$('#tradeDate').value = new Date().toISOString().slice(0,10);
+
+$('#btnTest').addEventListener('click',()=>{
+  API_BASE=$('#apiUrl').value.replace(/\/$/,'');
+  localStorage.setItem('fanfan_api',API_BASE);
+  testConnection();
+});
+
+$('#btnRefresh').addEventListener('click',()=>{
+  API_BASE=$('#apiUrl').value.replace(/\/$/,'');
+  localStorage.setItem('fanfan_api',API_BASE);
+  loadYijiner();
+});
+
+testConnection().then(ok=>{if(ok)loadYijiner();});
+</script>
+</body>
+</html>
